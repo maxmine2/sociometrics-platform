@@ -1,0 +1,36 @@
+html {
+    font: 18px 'Noto Serif', sans-serif;
+}
+
+.footer {
+    font: 20px 'Brygada 1918', serif;
+
+    display: inline-flex;
+    justify-content: space-between;
+}
+
+.footer-main {
+    width: 100%;
+}
+
+
+.menu {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    justify-content: space-around;
+    width: 100%;
+}
+
+div.menu {
+    width: 100%;
+}
+.title {
+    font-size: 24px;
+    margin: 0 0 0 0 !important;
+}
+
+div.title {
+    width: 33%;
+}
+
