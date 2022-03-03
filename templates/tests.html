@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/fonts.css">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <title>PsycoLogic. Группы</title>
+</head>
+<body>
+    <div class='app'>
+        <div class='footer footer-main'>
+            <div class='footer title'>
+                <p class='footer title'>PsycoLogic</p>
+            </div>
+            <div class='footer menu'>
+                <ul class='footer menu'>
+                    <li class='footer menu'><a href="/groups">Группы</a></li>
+                    <li class='footer menu'><a href="/tests">Тесты</a></li>
+                    <!-- <li class='menu'</li> -->
+                </ul>
+            </div>
+        </div>
+        <div class="main">
+            <p class="main main-header">Тесты</h1>
+            <a href="/tests/add_test">Добавить тест</a>
+            <table class='main main-table'>
+                {% if tests %}
+                <tr>
+                    <td>ID</td>
+                    <td>Название</td>
+                </tr>
+                {% for test in tests%}
+                <tr>
+                    
+                        <td>{{ test[0] }}</td>
+                        <td><a href="/tests/{{ test[0] }}" class="nocolorlink">{{ test[1] }}</a></td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <p class="main">Тесты не найдены</p>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+</body>
+</html>

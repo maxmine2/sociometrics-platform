@@ -3,6 +3,7 @@
 # * If you have "Better Comments" extension downloaded
 # * and enabled in your VS Code settings (or any other IDE)
 
+from cgi import test
 from flask import Flask, url_for, redirect, request, render_template
 from sqlalchemy import null
 import json
@@ -68,15 +69,19 @@ class Answer(db.Model):
 class Participants():
     @staticmethod
     def get_all():
-        return db.session.query(Participant).all()
+        data = db.session.query(Participant).all()
+        return [[participant.id, participant.first_name, participant.middle_name, participant.last_name, participant.group_id] for participant in data]
 
     @staticmethod
     def get_by_group(group_id):
-        return db.session.query(Participant).filter(Group.id == group_id)
+        data = db.session.query(Participant).filter(Group.id == group_id)
+        return [[participant.id, participant.first_name, participant.middle_name, participant.last_name, participant.group_id] for participant in data]
+
 
     @staticmethod
     def get_participant(participant_id):
-        return db.session.query(Participant).filter(Participant.id == participant_id)
+        data = db.session.query(Participant).filter(Participant.id == participant_id)
+        return [[participant.id, participant.first_name, participant.middle_name, participant.last_name, participant.group_id] for participant in data]
 
     @staticmethod
     def add_participant(group, first, last, middle=''):
@@ -84,17 +89,19 @@ class Participants():
             group_id=group, first_name=first, last_name=last, middle_name=middle)
         db.session.add(new_participant)
         db.session.commit()
-        return
+        return new_participant.id
 
 
 class Groups():
     @staticmethod
     def get_all():
-        return db.session.query(Group).all()
+        data = db.session.query(Group).all()
+        return [[group.id, group.name] for group in data]
 
     @staticmethod
     def get_group(group_id):
-        return db.session.query(Group).filter(Group.id == group_id)
+        data = db.session.query(Group).filter(Group.id == group_id)
+        return [[group.id, group.name] for group in data]
 
     @staticmethod
     def add_group(name):
@@ -107,15 +114,24 @@ class Groups():
 class Tests():
     @staticmethod
     def get_all():
-        return db.session.query(Test).all()
+        data = db.session.query(Test).all()
+        return [[test.id, test.name, test.group_id] for test in data]
 
     @staticmethod
     def get_by_group(group_id):
-        return db.session.query(Test).filter(Test.group_id == group_id)
+        data = db.session.query(Test).filter(Test.group_id == group_id)
+        return [[test.id, test.name, test.group_id] for test in data]
 
     @staticmethod
     def get_test(test_id):
-        return db.session.query(Test).filter(Test.id == test_id)
+        data = db.session.query(Test).filter(Test.id == test_id)
+        return [[test.id, test.name, test.group_id] for test in data]
+
+    @staticmethod
+    def get_test_group_id(test_id):
+        return db.session.query(Test).filter(Test.id == test_id)[0].group_id
+
+        
 
     @staticmethod
     def add_test(name, group_id):
@@ -128,11 +144,13 @@ class Tests():
 class Answers():
     @staticmethod
     def get_all():
-        return db.session.query(Answer).all()
+        data = db.session.query(Answer).all()
+        return [[answer.id, answer.participant_id, answer.group_id, answer.question, answer.answer] for answer in data]
 
     @staticmethod
     def get_by_test(test_id):
-        return db.session.query(Answer).filter(Answer.test_id == test_id)
+        data = db.session.query(Answer).filter(Answer.test_id == test_id)
+        return [[answer.id, answer.participant_id, answer.group_id, answer.question, answer.answer] for answer in data]
 
     @staticmethod
     def add_answer(participant_id, test_id, question, answer):
@@ -145,14 +163,9 @@ class Answers():
 # * Main response handlers
 # * -------------------------------
 
-# ! Must-do tasks for 22.02
-
-# TODO(): Put all functions in simple order, split static ones from others
-# TODO(): Create all html files, check for all functions exists before run.
-# TODO(): Create module for analytics
-# TODO(): Take a look on javascript graph libraries working without npm
-# TODO(): Or either find a way to bind Flask and Node.js modules together.
-# ! Do not forget to bind css files!
+# * -----------------------------------
+# * Static functions
+# * -----------------------------------
 
 
 @app.route('/', methods=['GET'])
@@ -172,17 +185,57 @@ def tests():
 
 @app.route('/groups/<group_id>')
 def group_by_id(group_id):
-    return render_template('group_by_id.html', group_info=Groups.get_group(group_id), tests=Tests.get_by_group(group_id))
+    return render_template('group_by_id.html', group=Groups.get_group(group_id)[0], participants=Participants.get_by_group(group_id), len_participants=len(Participants.get_by_group(group_id)))
+
+
+@app.route('/groups/add_group')
+def group_add():
+    return render_template('group_add.html')
+
+
+@app.route('/groups/<group_id>/add_participant')
+def group_add_participant(group_id):
+    return render_template('group_add_participant.html', group_id=group_id)
 
 
 @app.route('/tests/<test_id>')
 def test_by_id(test_id):
-    return render_template('test_by_id.html', test_info=Tests.get_test(test_id), group=Groups.get_group(Tests.get_test_group_id(test_id)))
+    return render_template('test_by_id.html', test=Tests.get_test(test_id)[0])
 
 
-@app.route('/test/<test_id>/add_form')
+@app.route('/tests/<test_id>/add_form')
 def test_add_answer(test_id):
-    return render_template('test_add_form.html', participans=Participants.get_by_group(Tests.get_test_group_id(test_id)))
+    return render_template('test_add_form.html', persons=Participants.get_by_group(Tests.get_test_group_id(test_id)), test_id=test_id)
+
+
+@app.route('/tests/add_test')
+def test_add():
+    return render_template('test_add.html', groups=Groups.get_all())
+
+
+# * --------------------------------------
+# * Non-static functions
+# * --------------------------------------
+
+@app.route('/groups/add_group/add', methods=['POST'])
+def group_add_request():
+    group_id = Groups.add_group(name=request.form.get('name'))
+
+    return redirect(url_for(f'groups'))
+
+
+@app.route('/groups/<group_id>/add_participant/add', methods=['POST'])
+def group_add_participant_request(group_id):
+    new_participant = Participants.add_participant(group=group_id, first=request.form.get(
+        'first_name'), last=request.form.get('last_name'), middle=request.form.get('middle_name'))
+    return render_template('group_add_participant_success.html', group_id=group_id)
+
+
+@app.route('/tests/add_test/add', methods=['POST'])
+def test_add_request():
+    new_test = Tests.add_test(name=request.form.get(
+        'test'), group_id=request.form.get('group_id'))
+    return redirect(url_for(f'tests'))
 
 
 @app.route('/test/<test_id>/add_form/add', methods=['POST'])
@@ -192,42 +245,6 @@ def test_add_answer_request(test_id):
         newansw_id = Answers.add_answer(
             participant_id=req['data']['participant_id'], test_id=test_id, question=answer[0], answer=answer[1])
     return 200, 'OK'
-
-
-@app.route('/groups/add_group')
-def group_add():
-    return render_template('group_add.html')
-
-
-@app.route('/groups/add_group/add', methods=['POST'])
-def group_add_request():
-    group_id = Groups.add_group(name=request.form.get('name'))
-
-    return redirect(url_for(f'/groups/{group_id}'))
-
-
-@app.route('/groups/<group_id>/add_participant')
-def group_add_participant():
-    return render_template('group_add_participant.html')
-
-
-@app.route('/groups/<group_id>/add_participant/add', methods=['POST'])
-def group_add_participant_request(group_id):
-    new_participant = Participants.add_participant(group_id=group_id, first_name=request.form.get(
-        'first_name'), last_name=request.form.get('last_name'), middle_name=request.form.get('middle_name'))
-    return render_template('group_add_participant_success.html')
-
-
-@app.route('/tests/add_test')
-def test_add():
-    return render_template('test_add.html', groups=Groups.get_all())
-
-
-@app.route('/tests/add_test/add', methods=['POST'])
-def test_add_request():
-    new_test = Tests.add_test(name=request.form.get(
-        'test'), group_id=request.form.get('group_id'))
-    return redirect(url_for(f'/tests/{test_id}'))
 
 
 if __name__ == '__main__':
