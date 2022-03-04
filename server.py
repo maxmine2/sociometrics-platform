@@ -3,7 +3,6 @@
 # * If you have "Better Comments" extension downloaded
 # * and enabled in your VS Code settings (or any other IDE)
 
-from cgi import test
 from flask import Flask, url_for, redirect, request, render_template
 from sqlalchemy import null
 import json
